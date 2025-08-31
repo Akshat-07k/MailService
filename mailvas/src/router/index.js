@@ -9,9 +9,14 @@ const router = createRouter({
       component: () => import('../pages/HomeView.vue')
     },
     {
-      path:'/create-mail',
+      path: '/create-mail',
       name: 'createMail',
       component: () => import('../pages/CreateMailView.vue')
+    },
+    {
+      path: '/AI',
+      name: 'Ai',
+      component: () => import('../pages/Ai.vue')
     }
   ],
 })

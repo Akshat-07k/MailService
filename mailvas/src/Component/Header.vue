@@ -2,6 +2,7 @@
     <nav class="navClass">
         <RouterLink to="/" class="custom-link">Home</RouterLink>
         <RouterLink to="/create-mail" class="custom-link">Create Mail</RouterLink>
+        <RouterLink to="/AI" class="custom-link">AI</RouterLink>
     </nav>
 </template>
 

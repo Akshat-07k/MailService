@@ -1,7 +1,7 @@
 <template>
-    <input type="text" v-model="promptText" class="promptInput">
+    <input type="text" v-model="promptText" class="promptInput" placeholder="prompt here">
     <input type="file" @change="handleFileChange" class="promptInput"/> <br/>
-    <button @click="generateText" style="padding: 10px 20px; cursor: pointer;">
+    <button @click="generateText" >
       ask API
     </button>
     <div v-if="loaderVar" style="margin-top: 20px;margin-left: 20px;">
@@ -22,12 +22,11 @@ import loader from "@/Component/loader.vue";
 import { marked } from "marked";
 
 const loaderVar = ref(false);  
-const ai = new GoogleGenAI({ apiKey: "AIzaSyCoc3Ehpb84gzPmH_6Jxw7qceIkDAIP4lQ" });
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GOOGLE_API_KEY });
 
-const API_KEY = "AIzaSyCoc3Ehpb84gzPmH_6Jxw7qceIkDAIP4lQ";
-// const genAI = new GoogleGenerativeAI("AIzaSyCoc3Ehpb84gzPmH_6Jxw7qceIkDAIP4lQ");
+// const genAI = new GoogleGenerativeAI("");
 
-const promptText = ref("Create a simple .....");
+const promptText = ref('');
 const response = ref("");
 const imageData = ref(null);
 // const generateText = async () => {
@@ -45,6 +44,7 @@ const imageData = ref(null);
 const generateText = async () => {
   try {
     loaderVar.value = true;
+    response.value = ''
 
     const parts = [
       { text: promptText.value }
@@ -81,6 +81,7 @@ const generateText = async () => {
     loaderVar.value = false;
   }
 };
+//for file read 
 const handleFileChange = async(event)=>{
   const response =  new Promise((resolve, reject)=>{
     const file = event.target.files[0];
@@ -108,6 +109,8 @@ button {
   color: white;
   border: none;
   border-radius: 6px;
+  padding: 10px 20px; 
+  cursor: pointer;
 }
 .promptInput{
     width: 300px;
