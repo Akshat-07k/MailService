@@ -1,74 +1,84 @@
 <template>
-    <div>
-        <div class="container">
-            <div class="board1" >
-                <!-- <button 
-                    @click="displayContentList = !displayContentList"
-                    style="padding: 10px 20px; background-color: #08CB00;border: none;border-radius: 1rem;cursor: pointer;"
-                    >Components</button> -->
-                <br><br>
-                <ComponentPalette
-                v-if="displayContentList"
-                :componentList="componentList"
-                :clone-item="cloneItem"
-                />
+    <div :class="['app-container', { collapsed: sidenavCollapsed }]">
+        <!-- Side Navigation -->
+        <nav :class="['side-nav', { collapsed: sidenavCollapsed }]">
+            <div class="logo">
+                <button class="logo-toggle" @click="toggleSidenav" aria-label="Toggle sidebar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
             </div>
-            <div class="board2">
-                <Board
-                    v-model:canvasElement="canvasElement"
-                    :getComponentProps="getComponentProps"
-                    :handleComponentClick="handleComponentClick"
-                />
+            <button class="nav-btn ">
+                <span>Editor</span>
+            </button>
+            <button class="nav-btn">
+                <span>Templates</span>
+            </button>
+        </nav>
 
-            </div>
-        </div>
-
-            <div class="stylingBox">
+        <!-- Main Content -->
+        <main :class="['main-content', { 'has-palette': showPalette }]">
+            <!-- Toolbar -->
+            <div class="toolbar">
                 <div class="actions">
                     <button @click="exportJSON">Export JSON</button>
                     <button @click="exportHTML">Export HTML</button>
                 </div>
+                <button class="component-toggle" @click="togglePalette" v-if="!showPalette">
+                   <i class="fa-solid fa-left-long"></i>
+                    Add Component
+                </button>
+            </div>
 
-                <!-- Container for styling + board -->
-                <div class="container">
-                    <!-- CSS Editor -->
-                    <div class="components2" v-if="selectedComponent !== null">
-                        <h3>Edit Styles</h3>
-                        <textarea
-                            name="styleText"
-                            cols="30"
-                            rows="15"
-                            v-model="componentStyles"
-                            placeholder="Write CSS for the selected component..."
-                        ></textarea>
+            <!-- Workspace -->
+            <div class="workspace">
+                <Board
+                    v-model:canvasElement="canvasElement"
+                    :getComponentProps="getComponentProps"
+                    :handleComponentClick="handleComponentClick"
+                    :handleComponentDblClick="handleComponentDblClick"
+                    :editingTextId="editingTextId"
+                    :editingText="inlineText"
+                    :updateInlineText="updateInlineText"
+                    :saveInlineText="saveInlineText"
+                    :cancelInlineEdit="cancelInlineEdit"
+                />
+            </div>
+
+            <!-- Floating Component Palette -->
+            <div class="component-palette" :class="{ 'palette-visible': showPalette }">
+                <div class="palette-header">
+                    <h3>Components</h3>
+                    <button @click="togglePalette" class="close-btn">&times;</button>
+                </div>
+                
+                <!-- Components List -->
+                <div class="palette-content">
+                    <ComponentPalette
+                        :componentList="componentList"
+                        :clone-item="cloneItem"
+                    />
+                </div>
+
+                <!-- Edit Component Form - Only visible when component selected -->
+                <div v-if="selectedComponent !== null" class="edit-panel">
+                    <div class="edit-header">
+                        <h4>Edit Styles</h4>
+                        <button @click="selectedComponent = null" class="close-btn small">&times;</button>
                     </div>
-
-                    <!-- Content Editor -->
-                    <div class="board" v-if="selectedComponent !== null">
-                        <h3>Edit Content</h3>
-                        <!-- For div or button -->
-                        <textarea
-                            v-if="canvasElementType() === 'div' || canvasElementType() === 'button'"
-                            cols="100"
-                            rows="10"
-                            id="textContent"
-                            v-model="canvasTextElement"
-                            placeholder="Enter text content..."
-                        ></textarea>
-
-                        <!-- For image -->
-                        <textarea
-                            v-if="canvasElementType() === 'img'"
-                            cols="40"
-                            rows="3"
-                            id="textContent"
-                            v-model="imageElement"
-                            placeholder="Enter image URL..."
-                        ></textarea>
+                    <p class="edit-note">Double-click a component in the workspace to edit its text inline.</p>
+                    <div class="editor-grid">
+                        <div class="editor-section">
+                            <h5>Styles</h5>
+                            <textarea
+                                v-model="componentStyles"
+                                placeholder="Edit component styles..."
+                                rows="6"
+                            ></textarea>
+                        </div>
                     </div>
                 </div>
             </div>
-
+        </main>
     </div>
 </template>
 
@@ -82,13 +92,51 @@ const displayContentList = ref(true);
 
 const selectedComponent = ref(null);
 const canvasIndex = ref(-1);
-
+const showPalette = ref(false);
 // const canvasIndex = () => {
 //     return canvasElement.value.findIndex(c => c.id === selectedComponent.value);
 // };
 
+const sidenavCollapsed = ref(false);
+const toggleSidenav = () => {
+    sidenavCollapsed.value = !sidenavCollapsed.value;
+}
+
+const editingTextId = ref(null);
+const inlineText = ref('');
+
+const handleComponentDblClick = (component) => {
+    if (component.type === 'div' || component.type === 'button') {
+        editingTextId.value = component.id;
+        inlineText.value = component.text || '';
+    }
+};
+
+const updateInlineText = (value) => {
+    inlineText.value = value;
+};
+
+const saveInlineText = (component) => {
+    const index = canvasElement.value.findIndex(c => c.id === component.id);
+    if (index !== -1) {
+        canvasElement.value[index].text = inlineText.value;
+    }
+    editingTextId.value = null;
+};
+
+const cancelInlineEdit = () => {
+    editingTextId.value = null;
+};
+
+const togglePalette = () => {
+    showPalette.value = !showPalette.value;
+}
+
 watch(selectedComponent, (newValue) => {
         canvasIndex.value = canvasElement.value.findIndex(c => c.id === newValue);
+        if (newValue !== null) {
+            showPalette.value = true;
+        }
 
 }, { deep: true });
 
@@ -127,7 +175,7 @@ const componentList = ref([
             minHeight: '10px',
             whiteSpace: 'pre-wrap', 
             cursor: 'pointer',
-            color: '#000'
+            color: 'white'
             // contentEditable: 'true' // added to make div editable
         },
         action: function() { 
@@ -282,138 +330,268 @@ function exportHTML() {
 
 </script>
 
-<style scoped>
-
-.container {
-    display: flex;
-    gap: 20px;
-    padding: 20px;
-    background: #1E1E2F;
-    border-radius: 12px;
+<style>
+:root {
+  --bg: #2D2D44;
+  --panel: #383857;
+  --muted: #6b7280;
+  --primary: #2563eb;
+  --accent: #10b981;
+  --border: #e6eef8;
+  --text: wheat;
+  --secondaryText: #2D2D44;
 }
 
-
-
-/* Sidebar button */
-.container button {
-    width: 100%;
-    /* padding: 12px 15px; */
-    background: #08CB00;
-    color: white;
-    font-weight: 600;
-    font-size: 14px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.3s;
+/* Layout */
+.app-container {
+  color: var(--text);
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  min-height: 100vh;
+  background: var(--bg);
 }
 
-.container button:hover {
-    background: #06a900;
+.app-container.collapsed {
+  grid-template-columns: 72px 1fr;
 }
 
-/* Board Area */
-.board1 {
-    flex: 1;
-    min-height: 400px;
-    /* background-color: #465C88; */
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-}
-.board2 {
-    flex: 4;
-    min-height: 400px;
-    /* background: #465C88; */
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    color: white;
+/* Side Navigation */
+.side-nav {
+  background: transparent;
+  padding: 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100px;
+  transition: width 0.25s ease;
 }
 
-/* Styling Box */
-.stylingBox {
-    margin-top: 20px;
-    background: #1e1e2f; /* Dark panel */
-    padding: 20px;
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    color: #f5f5f5;
+.side-nav.collapsed {
+  width: 40px;
 }
 
-/* Action Buttons */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.75rem 0.25rem;
+}
+
+.logo-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+}
+
+.side-nav.collapsed .logo span {
+  display: none;
+}
+
+.nav-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.06s ease;
+  justify-content: flex-start;
+  font-size: 0.95rem;
+}
+
+.nav-btn i {
+  width: 22px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.side-nav.collapsed .nav-btn {
+  justify-content: center;
+}
+
+.side-nav.collapsed .nav-btn span {
+  display: none;
+}
+
+.nav-btn.active {
+  background: linear-gradient(90deg, rgba(37,99,235,0.12), rgba(16,185,129,0.06));
+  border: 1px solid var(--border);
+}
+
+/* Main Content */
+.main-content {
+  padding: 1.25rem 1.5rem;
+  position: relative;
+}
+
+/* When palette is open, push workspace to avoid overlap */
+.main-content.has-palette .workspace {
+  margin-right: 360px;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
 .actions {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-start;
+  display: flex;
+  gap: 0.5rem;
 }
 
-.actions button {
-    background: #007bff;
-    color: #fff;
-    font-weight: bold;
-    padding: 10px 18px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.3s ease;
+.actions button,
+.component-toggle {
+  background: #ffffff;
+  color: var(--secondaryText);
+  border: 1px solid var(--border);
+  padding: 0.45rem 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
 }
 
-.actions button:hover {
-    background: #0056b3;
+.component-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 
-/* Container for editors */
-.container {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
+/* Workspace */
+.workspace {
+  background: var(--panel);
+  border-radius: 10px;
+  min-height: calc(100vh - 140px);
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px rgba(15,23,42,0.06);
+  transition: margin-right 0.25s ease;
 }
 
-/* Editor Panels */
-.components2 {
-    flex: 1;
-    width: 150px;
-    /* background: #465C88; */
-    border-radius: 10px;
-    padding: 15px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
- .board {
-    flex: 1;
-    min-width: 300px;
-    /* background: #465C88; */
-    border-radius: 10px;
-    padding: 15px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+.workspace > * {
+  width: 100%;
+  max-width: 980px;
 }
 
-.components2 h3, .board h3 {
-    font-size: 16px;
-    margin-bottom: 10px;
-    color: #ffcc00; /* Highlight title */
+/* Component Palette - docked card on the right */
+.component-palette {
+  position: fixed;
+  right: 0px;
+  top: 0;
+  width: 270px;
+  height: calc(100% - 40px);
+  background: var(--panel);
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  padding: 1rem;
+  box-shadow: 0 12px 40px rgba(2,6,23,0.06);
+  transform: translateX(420px);
+  opacity: 0;
+  overflow: auto;
 }
 
-/* Textarea Styling */
-textarea {
-    width: 90%;
-    border: 1px solid #444;
-    border-radius: 6px;
-    padding: 10px;
-    background: #1e1e2f;
-    color: #f5f5f5;
-    font-family: monospace;
-    font-size: 14px;
-    resize: vertical;
+.component-palette.palette-visible {
+  transform: translateX(0);
+  opacity: 1;
 }
 
-textarea:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 8px rgba(0, 123, 255, 0.4);
+.palette-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  color: var(--text);
+}
+
+.palette-header h3 { margin: 0; font-size: 1rem; }
+
+.palette-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Edit Panel - appears below components when selected */
+.edit-panel {
+  border-top: 1px solid var(--border);
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.edit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.edit-header h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.edit-note {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.close-btn.small {
+  width: 24px;
+  height: 24px;
+  font-size: 0.9rem;
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.editor-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Close Button */
+.close-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  background: rgba(15,23,42,0.04);
+  color: var(--text);
 }
 
 
+
+@media (max-width: 900px) {
+  .app-container { grid-template-columns: 72px 1fr; }
+  .main-content.has-palette .workspace { margin-right: 0; }
+  .component-palette { display: none; }
+}
 </style>

@@ -13,6 +13,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.2.0",
     "@google/genai": "^1.15.0",
     "@google/generative-ai": "^0.24.1",
     "groq-sdk": "^0.30.0",

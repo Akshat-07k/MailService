@@ -63,43 +63,71 @@
                     >
                       <!-- Special case for button -->
                       <template v-if="component.type === 'button'">
-                        <table
-                          border="0"
-                          :cellpadding="component.cellpadding"
-                          :cellspacing="component.cellspacing"
-                          :style="component.style"
-                        >
-                          <tbody>
-                            <tr>
-                              <td>
-                                <div
-                                  :is="component.type"
-                                  :style="component.style"
-                                  v-bind="props.getComponentProps(component)"
-                                  @click="
-                                    props.handleComponentClick(component)
-                                  "
-                                  :src="component.src"
-                                >
-                                  {{ component.text }}
-                                </div>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
+                        <template v-if="component.id === props.editingTextId">
+                          <div class="inline-edit-wrapper">
+                            <textarea
+                              class="inline-edit"
+                              :style="component.style"
+                              :value="props.editingText"
+                              @input="e => props.updateInlineText(e.target.value)"
+                              @blur="() => props.saveInlineText(component)"
+                              @keydown.escape.prevent="props.cancelInlineEdit()"
+                              autofocus
+                            ></textarea>
+                          </div>
+                        </template>
+                        <template v-else>
+                          <table
+                            border="0"
+                            :cellpadding="component.cellpadding"
+                            :cellspacing="component.cellspacing"
+                            :style="component.style"
+                          >
+                            <tbody>
+                              <tr>
+                                <td>
+                                  <div
+                                    :is="component.type"
+                                    :style="component.style"
+                                    v-bind="props.getComponentProps(component)"
+                                    @click="props.handleComponentClick(component)"
+                                    @dblclick="props.handleComponentDblClick(component)"
+                                    :src="component.src"
+                                  >
+                                    {{ component.text }}
+                                  </div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </template>
                       </template>
 
                       <!-- Render other components -->
-                      <component
-                        v-else
-                        :is="component.type"
-                        :style="component.style"
-                        v-bind="getComponentProps(component)"
-                        @click="handleComponentClick(component)"
-                        :src="component.src"
-                      >
-                        {{ component.text }}
-                      </component>
+                      <template v-else>
+                        <div v-if="component.id === props.editingTextId" class="inline-edit-wrapper">
+                          <textarea
+                            class="inline-edit"
+                            :style="component.style"
+                            :value="props.editingText"
+                            @input="e => props.updateInlineText(e.target.value)"
+                            @blur="() => props.saveInlineText(component)"
+                            @keydown.escape.prevent="props.cancelInlineEdit()"
+                            autofocus
+                          ></textarea>
+                        </div>
+                        <component
+                          v-else
+                          :is="component.type"
+                          :style="component.style"
+                          v-bind="props.getComponentProps(component)"
+                          @click="props.handleComponentClick(component)"
+                          @dblclick="props.handleComponentDblClick(component)"
+                          :src="component.src"
+                        >
+                          {{ component.text }}
+                        </component>
+                      </template>
                     </div>
                   </VueDraggable>
                 </td>
@@ -119,7 +147,13 @@ import { VueDraggable } from 'vue-draggable-plus';
 const props = defineProps({
   canvasElement: Array,
   getComponentProps: Function,
-  handleComponentClick: Function
+  handleComponentClick: Function,
+  handleComponentDblClick: Function,
+  editingTextId: [Number, String],
+  editingText: String,
+  updateInlineText: Function,
+  saveInlineText: Function,
+  cancelInlineEdit: Function
 });
 
 const emit = defineEmits(['update:canvasElement']);
@@ -161,16 +195,32 @@ const tableAttributes = ref({
 }
 
 .outerContainer {
-  background-color: #f5babb;
+  background-color: 2D2D44;
   width: 100%;
 }
 
 .mainTable {
-  background-color: #faeabb;
+  /* background-color: #faeabb; */
   margin: 0 auto;
 }
 
 .component-wrapper {
   margin: 10px 0;
+}
+
+.inline-edit-wrapper {
+  display: block;
+  width: 100%;
+}
+
+.inline-edit {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  resize: vertical;
+  font-size: 14px;
+  font-family: inherit;
 }
 </style>

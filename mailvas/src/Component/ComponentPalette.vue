@@ -1,30 +1,29 @@
 <template>
-  <div class="components-panel">
-    <VueDraggable
-      v-model="props.componentList"
-      :group="{ name: 'myGroup', pull: 'clone', put: false }"
-      :clone="props.cloneItem"
-      item-key="id"
-      :sort="false"
+  <VueDraggable
+    class="components-panel"
+    v-model="props.componentList"
+    :group="{ name: 'myGroup', pull: 'clone', put: false }"
+    :clone="props.cloneItem"
+    item-key="id"
+    :sort="false"
+  >
+    <div
+      v-for="component in props.componentList"
+      :key="component.id"
+      class="component-item"
     >
-      <div
-        v-for="component in props.componentList"
-        :key="component.id"
-        class="component-item"
+      <component
+        :is="component.type"
+        :style="component.style"
+        @click="component.action"
+        :src="component.src || 'https://via.placeholder.com/100'"
+        :alt="component.alt"
+        :cellpadding="component.cellpadding"
       >
-        <component
-          :is="component.type"
-          :style="component.style"
-          @click="component.action"
-          :src="component.src || 'https://via.placeholder.com/100'"
-          :alt="component.alt"
-          :cellpadding="component.cellpadding"
-        >
-          {{ component.text }}
-        </component>
-      </div>
-    </VueDraggable>
-  </div>
+        {{ component.text }}
+      </component>
+    </div>
+  </VueDraggable>
 </template>
 
 <script setup>
@@ -38,26 +37,28 @@ const props = defineProps({
 
 <style scoped>
 .components-panel {
-
-  min-height: 400px;
-  background-color: #fff0c4;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  /* min-height: 400px; */
   padding: 12px;
   border-radius: 6px;
-  border: 1px solid #ddd;
 }
 
 .component-item {
-  margin-bottom: 12px;
-  padding: 8px;
-  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  /* background: #fff; */
   border: 1px solid #ccc;
   border-radius: 4px;
   text-align: center;
   cursor: grab;
-  transition: background 0.2s;
+  transition: 0.2s;
 }
 
 .component-item:hover {
-  background: #f9f9f9;
+  background: #2D2D44;
 }
 </style>
